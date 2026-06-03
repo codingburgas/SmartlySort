@@ -1,0 +1,61 @@
+Project File Architecture
+=========================
+
+2526-11g-otj-AGGeorgiev22/
+|-- README.md
+|-- FILE_ARCHITECTURE.md
+`-- demo/
+    |-- mvnw
+    |-- mvnw.cmd
+    |-- pom.xml
+    |-- src/
+    |   |-- main/
+    |   |   |-- java/
+    |   |   |   `-- com/
+    |   |   |       `-- example/
+    |   |   |           `-- demo/
+    |   |   |               |-- DemoApplication.java
+    |   |   |               |-- controller/
+    |   |   |               |   `-- ProductController.java
+    |   |   |               |-- model/
+    |   |   |               |   `-- Product.java
+    |   |   |               |-- repository/
+    |   |   |               |   `-- ProductRepository.java
+    |   |   |               `-- service/
+    |   |   |                   |-- ProductService.java
+    |   |   |                   `-- ProductServiceImpl.java
+    |   |   `-- resources/
+    |   |       `-- application.properties
+    |   `-- test/
+    |       `-- java/
+    |           `-- com/
+    |               `-- example/
+    |                   `-- demo/
+    |                       `-- DemoApplicationTests.java
+    `-- target/
+        |-- classes/
+        |   |-- application.properties
+        |   `-- com/
+        |       `-- example/
+        |           `-- demo/
+        |               |-- controller/
+        |               |-- model/
+        |               |-- repository/
+        |               `-- service/
+        |-- generated-sources/
+        |   `-- annotations/
+        |-- maven-status/
+        |   `-- maven-compiler-plugin/
+        |       `-- compile/
+        |           `-- default-compile/
+        |               |-- createdFiles.lst
+        |               `-- inputFiles.lst
+        `-- test-classes/
+            `-- com/
+                `-- example/
+                    `-- demo/
+
+Notes:
+- src/main contains application source code and runtime resources.
+- src/test contains test source code.
+- target contains Maven build output artifacts.
