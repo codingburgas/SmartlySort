@@ -3,14 +3,18 @@ package com.example.demo.controller;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.dto.ShipmentStatusRequest;
 import com.example.demo.exception.InvalidMovementException;
 import com.example.demo.model.Shipment;
+import com.example.demo.model.ShipmentStatus;
 import com.example.demo.service.ShipmentService;
 
 @RestController
@@ -24,8 +28,14 @@ public class ShipmentController {
     }
 
     @PostMapping
-    public Shipment receive(@RequestBody Shipment shipment) {
-        return shipmentService.receiveShipment(shipment);
+    public Shipment create(@RequestBody Shipment shipment) {
+        return shipmentService.createShipment(shipment);
+    }
+
+    @PutMapping("/{id}/status")
+    public Shipment updateStatus(@PathVariable Long id,
+                                 @RequestBody ShipmentStatusRequest request) {
+        return shipmentService.updateStatus(id, ShipmentStatus.valueOf(request.getStatus()));
     }
 
     @GetMapping
