@@ -1,31 +1,40 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fira_Sans, Fira_Code } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/components/AuthProvider";
-import Nav from "@/components/Nav";
+import { WarehouseProvider } from "@/components/WarehouseProvider";
+import { AppShell } from "@/components/AppShell";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const firaSans = Fira_Sans({
+  variable: "--font-fira-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const firaCode = Fira_Code({
+  variable: "--font-fira-code",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata = {
-  title: "Inventory Management",
-  description: "SmartlySort inventory management system",
+  title: "SmartlySort — Inventory Management",
+  description: "Warehouse-scoped inventory management system",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-slate-50">
-        <AuthProvider>
-          <Nav />
-          <main className="mx-auto max-w-6xl w-full p-6">{children}</main>
-        </AuthProvider>
+    <html lang="en" className={`${firaSans.variable} ${firaCode.variable}`}>
+      <body>
+        <ThemeProvider>
+          <AuthProvider>
+            <WarehouseProvider>
+              <AppShell>
+                {children}
+              </AppShell>
+            </WarehouseProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
