@@ -90,6 +90,7 @@ public class WarehouseServiceImpl implements WarehouseService {
 
     @Override
     public List<User> getMembers(Long warehouseId) {
+        getWarehouseById(warehouseId);
         List<User> users = new ArrayList<>();
         for (WarehouseMember m : warehouseMemberRepository.findByWarehouseId(warehouseId)) {
             userRepository.findById(m.getUserId()).ifPresent(users::add);

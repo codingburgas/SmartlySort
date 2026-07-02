@@ -17,6 +17,7 @@ import com.example.demo.exception.InvalidMovementException;
 import com.example.demo.exception.SupplierNotFoundException;
 import com.example.demo.model.MovementType;
 import com.example.demo.model.Shipment;
+import com.example.demo.model.StockMovement;
 import com.example.demo.repository.ShipmentRepository;
 import com.example.demo.repository.SupplierRepository;
 
@@ -45,7 +46,11 @@ class ShipmentServiceImplTest {
 
     @Test
     void receiveShipmentRaisesStockAndSaves() {
+        StockMovement recorded = new StockMovement();
+        recorded.setWarehouseId(7L);
+
         when(supplierRepository.existsById(1L)).thenReturn(true);
+        when(stockMovementService.recordMovement(any())).thenReturn(recorded);
         when(shipmentRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Shipment result = shipmentService.receiveShipment(shipment(1L, 2L, 5));
@@ -54,6 +59,7 @@ class ShipmentServiceImplTest {
                 m.getType() == MovementType.IN
                         && m.getProductId().equals(2L)
                         && m.getQuantity() == 5));
+        verify(shipmentRepository).save(argThat(s -> s.getWarehouseId() != null && s.getWarehouseId() == 7L));
         assertThat(result).isNotNull();
     }
 

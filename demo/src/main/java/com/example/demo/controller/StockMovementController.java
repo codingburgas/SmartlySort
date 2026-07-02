@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.exception.InvalidMovementException;
 import com.example.demo.model.StockMovement;
 import com.example.demo.service.StockMovementService;
 
@@ -25,6 +26,9 @@ public class StockMovementController {
     @GetMapping
     public List<StockMovement> getAll(@RequestParam(required = false) Long warehouseId,
                                       @RequestParam(required = false) Long productId) {
+        if (productId == null && warehouseId == null) {
+            throw new InvalidMovementException("warehouseId or productId is required");
+        }
         if (productId != null) {
             return stockMovementService.getMovementsForProduct(productId);
         }

@@ -42,7 +42,8 @@ public class ShipmentServiceImpl implements ShipmentService {
         movement.setType(MovementType.IN);
         movement.setQuantity(shipment.getQuantity());
         movement.setReason("Shipment from supplier " + shipment.getSupplierId());
-        stockMovementService.recordMovement(movement);
+        StockMovement recorded = stockMovementService.recordMovement(movement);
+        shipment.setWarehouseId(recorded.getWarehouseId());
         shipment.setId(null);
         return shipmentRepository.save(shipment);
     }

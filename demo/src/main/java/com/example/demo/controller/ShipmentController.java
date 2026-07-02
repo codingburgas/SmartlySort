@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.exception.InvalidMovementException;
 import com.example.demo.model.Shipment;
 import com.example.demo.service.ShipmentService;
 
@@ -30,6 +31,9 @@ public class ShipmentController {
     @GetMapping
     public List<Shipment> getAll(@RequestParam(required = false) Long warehouseId,
                                  @RequestParam(required = false) Long supplierId) {
+        if (supplierId == null && warehouseId == null) {
+            throw new InvalidMovementException("warehouseId or supplierId is required");
+        }
         if (supplierId != null) {
             return shipmentService.getShipmentsForSupplier(supplierId);
         }
