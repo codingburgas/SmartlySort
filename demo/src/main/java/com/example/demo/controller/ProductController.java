@@ -49,11 +49,7 @@ public class ProductController {
 
     @PutMapping("/{id}")
     public Product update(@PathVariable Long id, @RequestBody Product product) {
-        Product updated = productService.updateProduct(id, product);
-        if (updated == null) {
-            throw new ProductNotFoundException(id);
-        }
-        return updated;
+        return productService.updateProduct(id, product);
     }
 
     @DeleteMapping("/{id}")

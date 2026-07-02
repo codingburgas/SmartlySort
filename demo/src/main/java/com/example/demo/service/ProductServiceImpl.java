@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.example.demo.exception.ProductNotFoundException;
 import com.example.demo.model.Product;
 import com.example.demo.repository.ProductRepository;
 
@@ -34,16 +35,19 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProduct(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new ProductNotFoundException(id);
+        }
         productRepository.deleteById(id);
     }
 
     @Override
     public Product updateProduct(Long id, Product product) {
-        if (productRepository.existsById(id)) {
-            product.setId(id);
-            return productRepository.save(product);
+        if (!productRepository.existsById(id)) {
+            throw new ProductNotFoundException(id);
         }
-        return null;
+        product.setId(id);
+        return productRepository.save(product);
     }
 
     @Override
