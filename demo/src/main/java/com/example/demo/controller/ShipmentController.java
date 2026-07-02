@@ -28,10 +28,11 @@ public class ShipmentController {
     }
 
     @GetMapping
-    public List<Shipment> getAll(@RequestParam(required = false) Long supplierId) {
+    public List<Shipment> getAll(@RequestParam(required = false) Long warehouseId,
+                                 @RequestParam(required = false) Long supplierId) {
         if (supplierId != null) {
             return shipmentService.getShipmentsForSupplier(supplierId);
         }
-        return shipmentService.getAllShipments();
+        return shipmentService.getShipmentsByWarehouse(warehouseId);
     }
 }

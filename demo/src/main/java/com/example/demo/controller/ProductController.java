@@ -27,8 +27,8 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<Product> getAll() {
-        return productService.getAllProducts();
+    public List<Product> getAll(@RequestParam Long warehouseId) {
+        return productService.getProductsByWarehouse(warehouseId);
     }
 
     @GetMapping("/{id}")
@@ -38,8 +38,13 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    public List<Product> search(@RequestParam String keyword) {
-        return productService.searchProducts(keyword);
+    public List<Product> search(@RequestParam Long warehouseId, @RequestParam String keyword) {
+        return productService.searchProducts(warehouseId, keyword);
+    }
+
+    @GetMapping("/low-stock")
+    public List<Product> lowStock(@RequestParam Long warehouseId) {
+        return productService.getLowStockProducts(warehouseId);
     }
 
     @PostMapping

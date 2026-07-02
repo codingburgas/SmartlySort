@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -19,8 +20,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public List<Product> getProductsByWarehouse(Long warehouseId) {
+        return productRepository.findByWarehouseId(warehouseId);
     }
 
     @Override
@@ -51,7 +52,14 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<Product> searchProducts(String keyword) {
-        return productRepository.findByNameContainingIgnoreCase(keyword);
+    public List<Product> searchProducts(Long warehouseId, String keyword) {
+        return productRepository.findByWarehouseIdAndNameContainingIgnoreCase(warehouseId, keyword);
+    }
+
+    @Override
+    public List<Product> getLowStockProducts(Long warehouseId) {
+        return productRepository.findByWarehouseId(warehouseId).stream()
+                .filter(p -> p.getQuantity() <= p.getMinStockLevel())
+                .collect(Collectors.toList());
     }
 }

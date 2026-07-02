@@ -39,6 +39,8 @@ public class StockMovementServiceImpl implements StockMovementService {
         Product product = productRepository.findById(movement.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException(movement.getProductId()));
 
+        movement.setWarehouseId(product.getWarehouseId());
+
         if (movement.getType() == MovementType.OUT) {
             if (product.getQuantity() < movement.getQuantity()) {
                 throw new InsufficientStockException(product.getId());
@@ -53,8 +55,8 @@ public class StockMovementServiceImpl implements StockMovementService {
     }
 
     @Override
-    public List<StockMovement> getAllMovements() {
-        return stockMovementRepository.findAll();
+    public List<StockMovement> getMovementsByWarehouse(Long warehouseId) {
+        return stockMovementRepository.findByWarehouseId(warehouseId);
     }
 
     @Override

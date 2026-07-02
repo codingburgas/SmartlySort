@@ -6,6 +6,6 @@ import com.example.demo.model.StockMovement;
 
 public interface StockMovementService {
     StockMovement recordMovement(StockMovement movement);
-    List<StockMovement> getAllMovements();
+    List<StockMovement> getMovementsByWarehouse(Long warehouseId);
     List<StockMovement> getMovementsForProduct(Long productId);
 }

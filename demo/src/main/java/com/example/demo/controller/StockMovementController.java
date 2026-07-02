@@ -23,11 +23,12 @@ public class StockMovementController {
     }
 
     @GetMapping
-    public List<StockMovement> getAll(@RequestParam(required = false) Long productId) {
-        if (productId == null) {
-            return stockMovementService.getAllMovements();
+    public List<StockMovement> getAll(@RequestParam(required = false) Long warehouseId,
+                                      @RequestParam(required = false) Long productId) {
+        if (productId != null) {
+            return stockMovementService.getMovementsForProduct(productId);
         }
-        return stockMovementService.getMovementsForProduct(productId);
+        return stockMovementService.getMovementsByWarehouse(warehouseId);
     }
 
     @PostMapping

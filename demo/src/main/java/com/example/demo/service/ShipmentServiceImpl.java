@@ -48,8 +48,8 @@ public class ShipmentServiceImpl implements ShipmentService {
     }
 
     @Override
-    public List<Shipment> getAllShipments() {
-        return shipmentRepository.findAll();
+    public List<Shipment> getShipmentsByWarehouse(Long warehouseId) {
+        return shipmentRepository.findByWarehouseId(warehouseId);
     }
 
     @Override
