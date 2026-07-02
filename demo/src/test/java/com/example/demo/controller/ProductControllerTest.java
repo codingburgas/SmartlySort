@@ -29,9 +29,9 @@ class ProductControllerTest {
     void getAllReturnsProducts() throws Exception {
         Product product = new Product();
         product.setName("Bolt");
-        when(productService.getAllProducts()).thenReturn(List.of(product));
+        when(productService.getProductsByWarehouse(1L)).thenReturn(List.of(product));
 
-        mockMvc.perform(get("/api/products"))
+        mockMvc.perform(get("/api/products?warehouseId=1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Bolt"));
     }

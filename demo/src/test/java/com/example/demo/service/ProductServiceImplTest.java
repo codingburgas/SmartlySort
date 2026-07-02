@@ -31,13 +31,31 @@ class ProductServiceImplTest {
     void searchProductsDelegatesToRepository() {
         Product product = new Product();
         product.setName("Bolt");
-        when(productRepository.findByNameContainingIgnoreCase("bo"))
+        when(productRepository.findByWarehouseIdAndNameContainingIgnoreCase(1L, "bo"))
                 .thenReturn(List.of(product));
 
-        List<Product> result = productService.searchProducts("bo");
+        List<Product> result = productService.searchProducts(1L, "bo");
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Bolt");
+    }
+
+    @Test
+    void getLowStockProductsReturnsOnlyBelowMin() {
+        Product low = new Product();
+        low.setQuantity(2);
+        low.setMinStockLevel(5);
+
+        Product ok = new Product();
+        ok.setQuantity(10);
+        ok.setMinStockLevel(5);
+
+        when(productRepository.findByWarehouseId(1L)).thenReturn(List.of(low, ok));
+
+        List<Product> result = productService.getLowStockProducts(1L);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getQuantity()).isEqualTo(2);
     }
 
     @Test
