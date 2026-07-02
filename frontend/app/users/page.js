@@ -8,7 +8,7 @@ import { users as usersApi } from "@/lib/api";
 const EMPTY = { firstName: "", lastName: "", username: "", email: "", password: "", role: "INVENTORY_STAFF" };
 
 export default function UsersPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [usersList, setUsersList] = useState([]);
   const [form, setForm] = useState(EMPTY);
@@ -17,10 +17,12 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) { router.replace("/login"); return; }
-    if (user.role !== "ADMINISTRATOR") { router.replace("/"); return; }
-    load();
-  }, [user]);
+    if (!authLoading && (!user || user.role !== "ADMINISTRATOR")) router.replace("/");
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (!authLoading && user && user.role === "ADMINISTRATOR") load();
+  }, [authLoading, user]);
 
   async function load() {
     try {
@@ -60,7 +62,7 @@ export default function UsersPage() {
     }
   }
 
-  if (!user || user.role !== "ADMINISTRATOR") return null;
+  if (authLoading || !user || user.role !== "ADMINISTRATOR") return <p className="p-6 text-gray-500">Loading…</p>;
 
   return (
     <div>

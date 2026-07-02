@@ -29,10 +29,8 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
-  if (loading) return null;
-
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

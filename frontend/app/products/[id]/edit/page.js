@@ -6,7 +6,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { products as productsApi } from "@/lib/api";
 
 export default function EditProductPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { id } = useParams();
   const [form, setForm] = useState(null);
@@ -14,20 +14,25 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) { router.replace("/login"); return; }
-    productsApi.get(id).then((p) => {
-      setForm({
-        name: p.name ?? "",
-        sku: p.sku ?? "",
-        price: p.price ?? "",
-        quantity: p.quantity ?? "",
-        category: p.category ?? "",
-        minStockLevel: p.minStockLevel ?? "",
-      });
-    }).catch((e) => setError(e.message));
-  }, [id, user]);
+    if (!authLoading && !user) router.replace("/login");
+  }, [authLoading, user, router]);
 
-  if (!user) return null;
+  useEffect(() => {
+    if (!authLoading && user) {
+      productsApi.get(id).then((p) => {
+        setForm({
+          name: p.name ?? "",
+          sku: p.sku ?? "",
+          price: p.price ?? "",
+          quantity: p.quantity ?? "",
+          category: p.category ?? "",
+          minStockLevel: p.minStockLevel ?? "",
+        });
+      }).catch((e) => setError(e.message));
+    }
+  }, [id, authLoading, user]);
+
+  if (authLoading || !user) return <p className="p-6 text-gray-500">Loading…</p>;
   if (!form) return <div className="text-slate-500">Loading…</div>;
 
   function set(field) {

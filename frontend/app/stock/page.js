@@ -8,7 +8,7 @@ import { products as productsApi, stock as stockApi } from "@/lib/api";
 const EMPTY = { productId: "", type: "IN", quantity: "", reason: "" };
 
 export default function StockPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [productsList, setProductsList] = useState([]);
   const [movements, setMovements] = useState([]);
@@ -18,10 +18,15 @@ export default function StockPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) { router.replace("/login"); return; }
-    productsApi.list().then(setProductsList).catch((e) => setError(e.message));
-    loadMovements();
-  }, [user]);
+    if (!authLoading && !user) router.replace("/login");
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      productsApi.list().then(setProductsList).catch((e) => setError(e.message));
+      loadMovements();
+    }
+  }, [authLoading, user]);
 
   async function loadMovements() {
     try {
@@ -56,7 +61,7 @@ export default function StockPage() {
     }
   }
 
-  if (!user) return null;
+  if (authLoading || !user) return <p className="p-6 text-gray-500">Loading…</p>;
 
   return (
     <div>

@@ -6,7 +6,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { suppliers as suppliersApi } from "@/lib/api";
 
 export default function EditSupplierPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { id } = useParams();
   const [form, setForm] = useState(null);
@@ -14,13 +14,18 @@ export default function EditSupplierPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) { router.replace("/login"); return; }
-    suppliersApi.get(id).then((s) => {
-      setForm({ name: s.name ?? "", contactEmail: s.contactEmail ?? "", phone: s.phone ?? "" });
-    }).catch((e) => setError(e.message));
-  }, [id, user]);
+    if (!authLoading && !user) router.replace("/login");
+  }, [authLoading, user, router]);
 
-  if (!user) return null;
+  useEffect(() => {
+    if (!authLoading && user) {
+      suppliersApi.get(id).then((s) => {
+        setForm({ name: s.name ?? "", contactEmail: s.contactEmail ?? "", phone: s.phone ?? "" });
+      }).catch((e) => setError(e.message));
+    }
+  }, [id, authLoading, user]);
+
+  if (authLoading || !user) return <p className="p-6 text-gray-500">Loading…</p>;
   if (!form) return <div className="text-slate-500">Loading…</div>;
 
   function set(field) {

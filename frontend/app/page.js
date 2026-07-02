@@ -13,14 +13,14 @@ const sections = [
 ];
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) router.replace("/login");
-  }, [user, router]);
+    if (!loading && !user) router.replace("/login");
+  }, [loading, user, router]);
 
-  if (!user) return null;
+  if (loading || !user) return <p className="p-6 text-gray-500">Loading…</p>;
 
   return (
     <div>

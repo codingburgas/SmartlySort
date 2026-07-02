@@ -7,16 +7,19 @@ import { useAuth } from "@/components/AuthProvider";
 import { products as productsApi } from "@/lib/api";
 
 export default function ProductsPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!user) { router.replace("/login"); return; }
-    load();
-  }, [user]);
+    if (!loading && !user) router.replace("/login");
+  }, [loading, user, router]);
+
+  useEffect(() => {
+    if (!loading && user) load();
+  }, [loading, user]);
 
   async function load() {
     try {
@@ -49,7 +52,7 @@ export default function ProductsPage() {
     }
   }
 
-  if (!user) return null;
+  if (loading || !user) return <p className="p-6 text-gray-500">Loading…</p>;
 
   return (
     <div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { products as productsApi } from "@/lib/api";
@@ -8,13 +8,17 @@ import { products as productsApi } from "@/lib/api";
 const EMPTY = { name: "", sku: "", price: "", quantity: "", category: "", minStockLevel: "" };
 
 export default function NewProductPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (!user) { router.replace("/login"); return null; }
+  useEffect(() => {
+    if (!authLoading && !user) router.replace("/login");
+  }, [authLoading, user, router]);
+
+  if (authLoading || !user) return <p className="p-6 text-gray-500">Loading…</p>;
 
   function set(field) {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));

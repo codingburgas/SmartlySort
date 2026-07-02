@@ -8,7 +8,7 @@ import { products as productsApi, suppliers as suppliersApi, shipments as shipme
 const EMPTY = { supplierId: "", productId: "", quantity: "", reference: "" };
 
 export default function ShipmentsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [suppliersList, setSuppliersList] = useState([]);
   const [productsList, setProductsList] = useState([]);
@@ -19,11 +19,16 @@ export default function ShipmentsPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) { router.replace("/login"); return; }
-    suppliersApi.list().then(setSuppliersList).catch((e) => setError(e.message));
-    productsApi.list().then(setProductsList).catch((e) => setError(e.message));
-    loadShipments();
-  }, [user]);
+    if (!authLoading && !user) router.replace("/login");
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      suppliersApi.list().then(setSuppliersList).catch((e) => setError(e.message));
+      productsApi.list().then(setProductsList).catch((e) => setError(e.message));
+      loadShipments();
+    }
+  }, [authLoading, user]);
 
   async function loadShipments() {
     try {
@@ -58,7 +63,7 @@ export default function ShipmentsPage() {
     }
   }
 
-  if (!user) return null;
+  if (authLoading || !user) return <p className="p-6 text-gray-500">Loading…</p>;
 
   return (
     <div>

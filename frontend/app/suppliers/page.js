@@ -7,16 +7,19 @@ import { useAuth } from "@/components/AuthProvider";
 import { suppliers as suppliersApi } from "@/lib/api";
 
 export default function SuppliersPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!user) { router.replace("/login"); return; }
-    load();
-  }, [user]);
+    if (!authLoading && !user) router.replace("/login");
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (!authLoading && user) load();
+  }, [authLoading, user]);
 
   async function load() {
     try {
@@ -49,7 +52,7 @@ export default function SuppliersPage() {
     }
   }
 
-  if (!user) return null;
+  if (authLoading || !user) return <p className="p-6 text-gray-500">Loading…</p>;
 
   return (
     <div>
