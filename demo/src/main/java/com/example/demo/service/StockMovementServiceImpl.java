@@ -3,6 +3,7 @@ package com.example.demo.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.exception.InsufficientStockException;
 import com.example.demo.exception.InvalidMovementException;
@@ -26,9 +27,13 @@ public class StockMovementServiceImpl implements StockMovementService {
     }
 
     @Override
+    @Transactional
     public StockMovement recordMovement(StockMovement movement) {
         if (movement.getQuantity() <= 0) {
             throw new InvalidMovementException("Quantity must be positive");
+        }
+        if (movement.getType() == null) {
+            throw new InvalidMovementException("Movement type is required");
         }
 
         Product product = productRepository.findById(movement.getProductId())

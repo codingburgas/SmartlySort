@@ -15,6 +15,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.demo.exception.InsufficientStockException;
+import com.example.demo.exception.InvalidMovementException;
+import com.example.demo.exception.ProductNotFoundException;
 import com.example.demo.model.MovementType;
 import com.example.demo.model.Product;
 import com.example.demo.model.StockMovement;
@@ -69,6 +71,7 @@ class StockMovementServiceImplTest {
         service.recordMovement(movement(MovementType.OUT, 2));
 
         assertThat(product.getQuantity()).isEqualTo(3);
+        verify(productRepository).save(product);
     }
 
     @Test
@@ -78,5 +81,25 @@ class StockMovementServiceImplTest {
 
         assertThatThrownBy(() -> service.recordMovement(movement(MovementType.OUT, 5)))
                 .isInstanceOf(InsufficientStockException.class);
+    }
+
+    @Test
+    void nonPositiveQuantityThrows() {
+        assertThatThrownBy(() -> service.recordMovement(movement(MovementType.IN, 0)))
+                .isInstanceOf(InvalidMovementException.class);
+    }
+
+    @Test
+    void missingTypeThrows() {
+        assertThatThrownBy(() -> service.recordMovement(movement(null, 3)))
+                .isInstanceOf(InvalidMovementException.class);
+    }
+
+    @Test
+    void missingProductThrows() {
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.recordMovement(movement(MovementType.IN, 3)))
+                .isInstanceOf(ProductNotFoundException.class);
     }
 }
