@@ -22,7 +22,7 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/")
+    @GetMapping
     public List<User> getAllUsers() {
         return userService.getAllUsers();
     }
@@ -32,7 +32,7 @@ public class UserController {
         return userService.getUserById(id);
     }
 
-    @PostMapping("/")
+    @PostMapping
     public User register(@RequestBody User user) {
         return userService.register(user);
     }

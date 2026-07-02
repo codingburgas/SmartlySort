@@ -7,9 +7,9 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,8 +26,12 @@ class UserServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
-    @InjectMocks
     private UserServiceImpl userService;
+
+    @BeforeEach
+    void setUp() {
+        userService = new UserServiceImpl(userRepository, new BCryptPasswordEncoder());
+    }
 
     @Test
     void registerHashesPasswordAndSaves() {
@@ -94,6 +98,25 @@ class UserServiceImplTest {
         when(userRepository.existsById(99L)).thenReturn(false);
 
         assertThatThrownBy(() -> userService.deleteUser(99L))
+                .isInstanceOf(UserNotFoundException.class);
+    }
+
+    @Test
+    void getUserByIdReturnsUser() {
+        User user = new User();
+        user.setUsername("alice");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        User result = userService.getUserById(1L);
+
+        assertThat(result).isSameAs(user);
+    }
+
+    @Test
+    void getUserByIdMissingThrows() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getUserById(1L))
                 .isInstanceOf(UserNotFoundException.class);
     }
 }
