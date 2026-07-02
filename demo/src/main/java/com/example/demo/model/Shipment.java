@@ -1,6 +1,8 @@
 package com.example.demo.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 public class Shipment extends BaseEntity {
@@ -9,6 +11,9 @@ public class Shipment extends BaseEntity {
     private Long warehouseId;
     private int quantity;
     private String reference;
+
+    @Enumerated(EnumType.STRING)
+    private ShipmentStatus status;
 
     public Long getSupplierId() {
         return supplierId;
@@ -48,5 +53,13 @@ public class Shipment extends BaseEntity {
 
     public void setReference(String reference) {
         this.reference = reference;
+    }
+
+    public ShipmentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ShipmentStatus status) {
+        this.status = status;
     }
 }
