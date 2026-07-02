@@ -62,7 +62,10 @@ export const suppliers = {
 
 export const shipments = {
   list: (warehouseId) => request(`/shipments?warehouseId=${warehouseId}`),
+  create: (data) => request("/shipments", { method: "POST", body: JSON.stringify(data) }),
   receive: (data) => request("/shipments", { method: "POST", body: JSON.stringify(data) }),
+  updateStatus: (id, status) =>
+    request(`/shipments/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
 };
 
 export const users = {
