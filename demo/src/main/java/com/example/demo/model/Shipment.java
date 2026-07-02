@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 public class Shipment extends BaseEntity {
     private Long supplierId;
     private Long productId;
+    private Long warehouseId;
     private int quantity;
     private String reference;
 
@@ -15,6 +16,14 @@ public class Shipment extends BaseEntity {
 
     public void setSupplierId(Long supplierId) {
         this.supplierId = supplierId;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
     }
 
     public Long getProductId() {

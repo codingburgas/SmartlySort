@@ -10,4 +10,5 @@ import com.example.demo.model.StockMovement;
 @Repository
 public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
     List<StockMovement> findByProductId(Long productId);
+    List<StockMovement> findByWarehouseId(Long warehouseId);
 }

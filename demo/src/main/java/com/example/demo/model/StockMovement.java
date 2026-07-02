@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 @Entity
 public class StockMovement extends BaseEntity {
     private Long productId;
+    private Long warehouseId;
 
     @Enumerated(EnumType.STRING)
     private MovementType type;
@@ -20,6 +21,14 @@ public class StockMovement extends BaseEntity {
 
     public void setProductId(Long productId) {
         this.productId = productId;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
     }
 
     public MovementType getType() {

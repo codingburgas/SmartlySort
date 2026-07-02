@@ -10,6 +10,7 @@ public class Product extends BaseEntity {
     private int quantity;
     private String category;
     private int minStockLevel;
+    private Long warehouseId;
 
     public String getName() {
         return name;
@@ -57,5 +58,13 @@ public class Product extends BaseEntity {
 
     public void setMinStockLevel(int minStockLevel) {
         this.minStockLevel = minStockLevel;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
     }
 }

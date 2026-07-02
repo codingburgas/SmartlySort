@@ -8,4 +8,5 @@ import com.example.demo.model.Shipment;
 
 public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
     List<Shipment> findBySupplierId(Long supplierId);
+    List<Shipment> findByWarehouseId(Long warehouseId);
 }

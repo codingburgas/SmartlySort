@@ -10,4 +10,6 @@ import com.example.demo.model.Product;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByNameContainingIgnoreCase(String name);
+    List<Product> findByWarehouseId(Long warehouseId);
+    List<Product> findByWarehouseIdAndNameContainingIgnoreCase(Long warehouseId, String name);
 }
