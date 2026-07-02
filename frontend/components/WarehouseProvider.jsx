@@ -11,12 +11,14 @@ export function WarehouseProvider({ children }) {
   const [warehouses, setWarehouses] = useState([]);
   const [currentWarehouse, setCurrentWarehouse] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const refreshWarehouses = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
       const data = await warehousesApi.list(user.id);
+      setError(null);
       setWarehouses(data);
       const storedId = localStorage.getItem("currentWarehouseId");
       if (storedId) {
@@ -31,7 +33,9 @@ export function WarehouseProvider({ children }) {
         setCurrentWarehouse(data[0]);
         localStorage.setItem("currentWarehouseId", String(data[0].id));
       }
-    } catch {}
+    } catch (err) {
+      setError(err.message || "Failed to load warehouses");
+    }
     setLoading(false);
   }, [user]);
 
@@ -50,7 +54,7 @@ export function WarehouseProvider({ children }) {
   }
 
   return (
-    <WarehouseContext.Provider value={{ warehouses, currentWarehouse, selectWarehouse, refreshWarehouses, loading }}>
+    <WarehouseContext.Provider value={{ warehouses, currentWarehouse, selectWarehouse, refreshWarehouses, loading, error }}>
       {children}
     </WarehouseContext.Provider>
   );

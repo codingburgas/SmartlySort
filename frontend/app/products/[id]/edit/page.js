@@ -33,6 +33,10 @@ export default function EditProductPage() {
   useEffect(() => {
     if (!authLoading && user) {
       productsApi.get(id).then((p) => {
+        if (currentWarehouse && Number(p.warehouseId) !== Number(currentWarehouse.id)) {
+          router.replace("/products");
+          return;
+        }
         setForm({
           name: p.name ?? "",
           sku: p.sku ?? "",
@@ -44,7 +48,7 @@ export default function EditProductPage() {
         });
       }).catch((e) => setError(e.message));
     }
-  }, [id, authLoading, user]);
+  }, [id, authLoading, user, currentWarehouse, router]);
 
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));

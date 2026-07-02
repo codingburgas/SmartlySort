@@ -186,7 +186,7 @@ function MembersModal({ warehouse, onClose }) {
 
 export default function WarehousesPage() {
   const { user, loading: authLoading } = useAuth();
-  const { warehouses, selectWarehouse, refreshWarehouses, loading } = useWarehouse();
+  const { warehouses, selectWarehouse, refreshWarehouses, loading, error } = useWarehouse();
   const router = useRouter();
   const [showNew, setShowNew] = useState(false);
   const [membersWarehouse, setMembersWarehouse] = useState(null);
@@ -228,6 +228,16 @@ export default function WarehousesPage() {
         </Button>
       </div>
 
+      {error && (
+        <div className="mb-5 flex items-center justify-between gap-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={15} className="flex-shrink-0" />
+            {error}
+          </div>
+          <Button variant="outline" size="sm" onClick={refreshWarehouses}>Retry</Button>
+        </div>
+      )}
+
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -255,7 +265,7 @@ export default function WarehousesPage() {
                 >
                   <Warehouse size={20} className="text-[var(--accent)]" />
                 </div>
-                <Badge variant="outline">{String(w.id).startsWith("1") ? "Owner" : "Member"}</Badge>
+                <Badge variant="outline">{Number(w.ownerId) === Number(user?.id) ? "Owner" : "Member"}</Badge>
               </div>
               <h2
                 className="font-bold text-[var(--fg)] mb-1 group-hover:text-[var(--accent)] transition-colors"
