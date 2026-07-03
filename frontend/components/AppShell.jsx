@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -9,6 +9,7 @@ import {
   ArrowLeftRight,
   Truck,
   Ship,
+  BarChart3,
   Users,
   Warehouse,
   Sun,
@@ -22,6 +23,7 @@ import {
 import { useAuth } from "./AuthProvider";
 import { useTheme } from "./ThemeProvider";
 import { useWarehouse } from "./WarehouseProvider";
+import { products as productsApi } from "@/lib/api";
 
 const navLinks = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -29,9 +31,10 @@ const navLinks = [
   { href: "/stock", label: "Stock", icon: ArrowLeftRight },
   { href: "/suppliers", label: "Suppliers", icon: Truck },
   { href: "/shipments", label: "Shipments", icon: Ship },
+  { href: "/reports", label: "Reports", icon: BarChart3 },
 ];
 
-function NavLink({ href, label, icon: Icon, pathname }) {
+function NavLink({ href, label, icon: Icon, pathname, badge }) {
   const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
   return (
     <Link
@@ -43,7 +46,12 @@ function NavLink({ href, label, icon: Icon, pathname }) {
       }`}
     >
       <Icon size={18} />
-      {label}
+      <span className="flex-1">{label}</span>
+      {badge > 0 && (
+        <span className="flex-shrink-0 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 text-xs font-semibold px-2 py-0.5">
+          {badge}
+        </span>
+      )}
     </Link>
   );
 }
@@ -104,7 +112,28 @@ function WarehouseSwitcher({ onClose }) {
 function SidebarContent({ pathname, onLinkClick }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { currentWarehouse } = useWarehouse();
   const router = useRouter();
+  const [lowStockCount, setLowStockCount] = useState(0);
+
+  useEffect(() => {
+    if (!currentWarehouse) {
+      setLowStockCount(0);
+      return;
+    }
+    let cancelled = false;
+    productsApi
+      .lowStock(currentWarehouse.id)
+      .then((data) => {
+        if (!cancelled) setLowStockCount((data || []).length);
+      })
+      .catch(() => {
+        if (!cancelled) setLowStockCount(0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentWarehouse]);
 
   const links = [...navLinks];
   if (user?.role === "ADMINISTRATOR") {
@@ -134,7 +163,7 @@ function SidebarContent({ pathname, onLinkClick }) {
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {links.map((link) => (
           <div key={link.href} onClick={onLinkClick}>
-            <NavLink {...link} pathname={pathname} />
+            <NavLink {...link} pathname={pathname} badge={link.href === "/reports" ? lowStockCount : 0} />
           </div>
         ))}
       </nav>
