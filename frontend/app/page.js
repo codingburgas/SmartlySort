@@ -2,14 +2,27 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Package, BarChart2, AlertTriangle, Truck } from "lucide-react";
+import { Package, BarChart2, DollarSign, AlertTriangle, Truck, Ship } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/components/AuthProvider";
 import { useWarehouse } from "@/components/WarehouseProvider";
-import { products as productsApi, stock as stockApi, suppliers as suppliersApi } from "@/lib/api";
+import {
+  products as productsApi,
+  stock as stockApi,
+  suppliers as suppliersApi,
+  shipments as shipmentsApi,
+  warehouses as warehousesApi,
+} from "@/lib/api";
 import { StatCard } from "@/components/ui/StatCard";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { LowStockWidget } from "@/components/dashboard/LowStockWidget";
+import { ShipmentsWidget } from "@/components/dashboard/ShipmentsWidget";
+import { ActivityWidget } from "@/components/dashboard/ActivityWidget";
+import { TeamWidget } from "@/components/dashboard/TeamWidget";
+import { TopProductsWidget } from "@/components/dashboard/TopProductsWidget";
+import { QuickActionsWidget } from "@/components/dashboard/QuickActionsWidget";
+import { formatCurrency } from "@/components/dashboard/widgetUtils";
 
 const DashboardCharts = dynamic(() => import("@/components/DashboardCharts"), { ssr: false, loading: () => (
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -24,7 +37,9 @@ export default function DashboardPage() {
 
   const [products, setProducts] = useState([]);
   const [movements, setMovements] = useState([]);
-  const [supplierCount, setSupplierCount] = useState(0);
+  const [suppliersList, setSuppliersList] = useState([]);
+  const [shipmentsList, setShipmentsList] = useState([]);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,14 +61,18 @@ export default function DashboardPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [prods, movs, sups] = await Promise.all([
+      const [prods, movs, sups, ships, mems] = await Promise.all([
         productsApi.list(currentWarehouse.id),
         stockApi.list(currentWarehouse.id),
         suppliersApi.list(),
+        shipmentsApi.list(currentWarehouse.id),
+        warehousesApi.listMembers(currentWarehouse.id),
       ]);
       setProducts(prods || []);
       setMovements(movs || []);
-      setSupplierCount((sups || []).length);
+      setSuppliersList(sups || []);
+      setShipmentsList(ships || []);
+      setMembers(mems || []);
     } catch {}
     setLoading(false);
   }
@@ -61,8 +80,8 @@ export default function DashboardPage() {
   if (authLoading || whLoading || !user) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-xl" />)}
@@ -74,7 +93,14 @@ export default function DashboardPage() {
   if (!currentWarehouse) return null;
 
   const totalUnits = products.reduce((acc, p) => acc + (p.quantity || 0), 0);
-  const lowStockCount = products.filter((p) => p.quantity <= p.minStockLevel).length;
+  const inventoryValue = products.reduce((acc, p) => acc + (p.price || 0) * (p.quantity || 0), 0);
+  const lowStock = products.filter((p) => p.quantity <= p.minStockLevel);
+  const openShipments = shipmentsList.filter((s) => (s.status ?? "DUE") !== "COMPLETED").length;
+
+  const productMap = {};
+  for (const p of products) productMap[p.id] = p.name;
+  const supplierMap = {};
+  for (const s of suppliersList) supplierMap[s.id] = s.name;
 
   return (
     <div className="space-y-6">
@@ -87,11 +113,13 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <StatCard label="Total Products" value={products.length} icon={Package} loading={loading} />
         <StatCard label="Total Units" value={totalUnits.toLocaleString()} icon={BarChart2} loading={loading} accent />
-        <StatCard label="Low Stock" value={lowStockCount} icon={AlertTriangle} loading={loading} />
-        <StatCard label="Suppliers" value={supplierCount} icon={Truck} loading={loading} />
+        <StatCard label="Inventory Value" value={formatCurrency(inventoryValue)} icon={DollarSign} loading={loading} accent />
+        <StatCard label="Low Stock" value={lowStock.length} icon={AlertTriangle} loading={loading} />
+        <StatCard label="Open Shipments" value={openShipments} icon={Ship} loading={loading} />
+        <StatCard label="Suppliers" value={suppliersList.length} icon={Truck} loading={loading} />
       </div>
 
       {!loading && products.length === 0 ? (
@@ -103,6 +131,20 @@ export default function DashboardPage() {
       ) : (
         <DashboardCharts products={products} movements={movements} loading={loading} />
       )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <LowStockWidget loading={loading} lowStock={lowStock} />
+        <ShipmentsWidget
+          loading={loading}
+          shipmentsList={shipmentsList}
+          productMap={productMap}
+          supplierMap={supplierMap}
+        />
+        <ActivityWidget loading={loading} movements={movements} productMap={productMap} />
+        <TeamWidget loading={loading} members={members} user={user} currentWarehouse={currentWarehouse} />
+        <TopProductsWidget loading={loading} products={products} />
+        <QuickActionsWidget />
+      </div>
     </div>
   );
 }
