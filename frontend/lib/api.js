@@ -5,40 +5,50 @@ async function request(path, options = {}) {
     headers: { "Content-Type": "application/json", ...options.headers },
     ...options,
   });
+  const text = await res.text();
   if (!res.ok) {
     let message = res.statusText;
     try {
-      const body = await res.json();
-      if (body.message) message = body.message;
+      const body = text ? JSON.parse(text) : null;
+      if (body && body.message) message = body.message;
     } catch {}
     throw new Error(message);
   }
-  if (res.status === 204) return null;
-  return res.json();
+  return text ? JSON.parse(text) : null;
 }
 
 export const auth = {
   login: (username, password) =>
-    request("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-    }),
+    request("/auth/login", { method: "POST", body: JSON.stringify({ username, password }) }),
+};
+
+export const warehouses = {
+  list: (userId) => request(`/warehouses?userId=${userId}`),
+  get: (id) => request(`/warehouses/${id}`),
+  create: (data) => request("/warehouses", { method: "POST", body: JSON.stringify(data) }),
+  update: (id, data) => request(`/warehouses/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  remove: (id) => request(`/warehouses/${id}`, { method: "DELETE" }),
+  addMember: (id, usernameOrEmail) =>
+    request(`/warehouses/${id}/members`, { method: "POST", body: JSON.stringify({ usernameOrEmail }) }),
+  listMembers: (id) => request(`/warehouses/${id}/members`),
+  removeMember: (id, userId) => request(`/warehouses/${id}/members/${userId}`, { method: "DELETE" }),
 };
 
 export const products = {
-  list: () => request("/products"),
+  list: (warehouseId) => request(`/products?warehouseId=${warehouseId}`),
   get: (id) => request(`/products/${id}`),
-  search: (keyword) => request(`/products/search?keyword=${encodeURIComponent(keyword)}`),
+  search: (warehouseId, keyword) =>
+    request(`/products/search?warehouseId=${warehouseId}&keyword=${encodeURIComponent(keyword)}`),
+  lowStock: (warehouseId) => request(`/products/low-stock?warehouseId=${warehouseId}`),
   create: (data) => request("/products", { method: "POST", body: JSON.stringify(data) }),
   update: (id, data) => request(`/products/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   remove: (id) => request(`/products/${id}`, { method: "DELETE" }),
 };
 
 export const stock = {
-  list: (productId) =>
-    request(`/stock-movements${productId ? `?productId=${productId}` : ""}`),
-  record: (data) =>
-    request("/stock-movements", { method: "POST", body: JSON.stringify(data) }),
+  list: (warehouseId) => request(`/stock-movements?warehouseId=${warehouseId}`),
+  listByProduct: (productId) => request(`/stock-movements?productId=${productId}`),
+  record: (data) => request("/stock-movements", { method: "POST", body: JSON.stringify(data) }),
 };
 
 export const suppliers = {
@@ -51,15 +61,15 @@ export const suppliers = {
 };
 
 export const shipments = {
-  list: (supplierId) =>
-    request(`/shipments${supplierId ? `?supplierId=${supplierId}` : ""}`),
-  receive: (data) =>
-    request("/shipments", { method: "POST", body: JSON.stringify(data) }),
+  list: (warehouseId) => request(`/shipments?warehouseId=${warehouseId}`),
+  create: (data) => request("/shipments", { method: "POST", body: JSON.stringify(data) }),
+  receive: (data) => request("/shipments", { method: "POST", body: JSON.stringify(data) }),
+  updateStatus: (id, status) =>
+    request(`/shipments/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
 };
 
 export const users = {
   list: () => request("/users"),
-  get: (id) => request(`/users/${id}`),
   create: (data) => request("/users", { method: "POST", body: JSON.stringify(data) }),
   remove: (id) => request(`/users/${id}`, { method: "DELETE" }),
 };

@@ -2,13 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeftRight, AlertCircle } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { useWarehouse } from "@/components/WarehouseProvider";
 import { products as productsApi, stock as stockApi } from "@/lib/api";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { SkeletonTable } from "@/components/ui/Skeleton";
 
 const EMPTY = { productId: "", type: "IN", quantity: "", reason: "" };
 
+const selectCls = "rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--fg)] focus:outline-2 focus:outline-[var(--accent)]";
+const inputCls = "rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--fg)] placeholder:text-[var(--muted-fg)] focus:outline-2 focus:outline-[var(--accent)]";
+
 export default function StockPage() {
   const { user, loading: authLoading } = useAuth();
+  const { currentWarehouse, loading: whLoading } = useWarehouse();
   const router = useRouter();
   const [productsList, setProductsList] = useState([]);
   const [movements, setMovements] = useState([]);
@@ -16,29 +26,37 @@ export default function StockPage() {
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login");
   }, [authLoading, user, router]);
 
   useEffect(() => {
-    if (!authLoading && user) {
-      productsApi.list().then(setProductsList).catch((e) => setError(e.message));
+    if (!authLoading && user && !whLoading && !currentWarehouse) router.replace("/warehouses");
+  }, [authLoading, user, whLoading, currentWarehouse, router]);
+
+  useEffect(() => {
+    if (user && currentWarehouse) {
+      productsApi.list(currentWarehouse.id).then(setProductsList).catch((e) => setError(e.message));
       loadMovements();
     }
-  }, [authLoading, user]);
+  }, [user, currentWarehouse]);
 
   async function loadMovements() {
+    setTableLoading(true);
     try {
-      const data = await stockApi.list();
-      setMovements(data);
+      const data = await stockApi.list(currentWarehouse.id);
+      setMovements(data || []);
     } catch (e) {
       setError(e.message);
+    } finally {
+      setTableLoading(false);
     }
   }
 
-  function set(field) {
-    return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  function set(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
   }
 
   async function handleSubmit(e) {
@@ -47,9 +65,9 @@ export default function StockPage() {
     setLoading(true);
     try {
       await stockApi.record({
-        productId: parseInt(form.productId, 10),
+        productId: parseInt(form.productId),
         type: form.type,
-        quantity: parseInt(form.quantity, 10),
+        quantity: parseInt(form.quantity),
         reason: form.reason,
       });
       setForm(EMPTY);
@@ -61,101 +79,95 @@ export default function StockPage() {
     }
   }
 
-  if (authLoading || !user) return <p className="p-6 text-gray-500">Loading…</p>;
+  if (authLoading || !user || whLoading) return null;
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-slate-800 mb-6">Stock Movements</h1>
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 mb-8 max-w-lg">
-        <h2 className="text-lg font-medium text-slate-700 mb-4">Record Movement</h2>
-        {formError && <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{formError}</div>}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700">Product</label>
-            <select
-              value={form.productId}
-              onChange={set("productId")}
-              required
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Select product…</option>
-              {productsList.map((p) => (
-                <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700">Type</label>
-            <select
-              value={form.type}
-              onChange={set("type")}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="IN">IN</option>
-              <option value="OUT">OUT</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700">Quantity</label>
-            <input
-              type="number"
-              min="1"
-              value={form.quantity}
-              onChange={set("quantity")}
-              required
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700">Reason</label>
-            <input
-              type="text"
-              value={form.reason}
-              onChange={set("reason")}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60 transition-colors"
-          >
-            {loading ? "Recording…" : "Record movement"}
-          </button>
-        </form>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-[var(--fg)]">Stock Movements</h1>
+        <p className="text-sm text-[var(--muted-fg)] mt-0.5">{currentWarehouse?.name}</p>
       </div>
 
-      {error && <div className="mb-4 text-red-600 text-sm">{error}</div>}
-      <h2 className="text-lg font-medium text-slate-700 mb-4">History</h2>
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
-              {["ID", "Product", "Type", "Quantity", "Reason"].map((h) => (
-                <th key={h} className="px-4 py-3 text-left font-medium text-slate-600">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {movements.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">No movements recorded.</td></tr>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="p-5 lg:col-span-1">
+          <h2 className="text-base font-semibold text-[var(--fg)] mb-4">Record Movement</h2>
+          {formError && (
+            <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2.5 text-sm text-red-700 dark:text-red-400">
+              <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
+              {formError}
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-[var(--fg)]">Product</label>
+              <select value={form.productId} onChange={(e) => set("productId", e.target.value)} required className={selectCls}>
+                <option value="">Select product…</option>
+                {productsList.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-[var(--fg)]">Type</label>
+              <select value={form.type} onChange={(e) => set("type", e.target.value)} className={selectCls}>
+                <option value="IN">IN — Stock received</option>
+                <option value="OUT">OUT — Stock removed</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-[var(--fg)]">Quantity</label>
+              <input type="number" min="1" value={form.quantity} onChange={(e) => set("quantity", e.target.value)} required className={inputCls} placeholder="0" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-[var(--fg)]">Reason</label>
+              <input type="text" value={form.reason} onChange={(e) => set("reason", e.target.value)} className={inputCls} placeholder="Optional reason" />
+            </div>
+            <Button type="submit" disabled={loading} className="justify-center">
+              {loading ? "Recording…" : "Record Movement"}
+            </Button>
+          </form>
+        </Card>
+
+        <div className="lg:col-span-2 space-y-3">
+          <h2 className="text-base font-semibold text-[var(--fg)]">History</h2>
+          {error && <div className="text-sm text-[var(--destructive)]">{error}</div>}
+          <Card className="overflow-hidden">
+            {tableLoading ? (
+              <div className="p-5"><SkeletonTable rows={5} cols={5} /></div>
+            ) : movements.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <ArrowLeftRight size={40} className="text-[var(--border)] mb-3" />
+                <p className="font-semibold text-[var(--fg)]">No movements yet</p>
+                <p className="text-sm text-[var(--muted-fg)] mt-1">Record your first stock movement</p>
+              </div>
             ) : (
-              movements.map((m) => (
-                <tr key={m.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3 text-slate-500">{m.id}</td>
-                  <td className="px-4 py-3 text-slate-800">{m.product?.name ?? m.productId}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${m.type === "IN" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
-                      {m.type}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-slate-700">{m.quantity}</td>
-                  <td className="px-4 py-3 text-slate-500">{m.reason}</td>
-                </tr>
-              ))
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-[var(--muted)] border-b border-[var(--border)]">
+                    <tr>
+                      {["#", "Product", "Type", "Qty", "Reason"].map((h) => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-[var(--muted-fg)] uppercase tracking-wider">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)]">
+                    {movements.map((m) => (
+                      <tr key={m.id} className="hover:bg-[var(--muted)] transition-colors">
+                        <td className="px-4 py-3 font-mono text-xs text-[var(--muted-fg)]">{m.id}</td>
+                        <td className="px-4 py-3 font-medium text-[var(--fg)]">{m.product?.name ?? m.productId}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant={m.type === "IN" ? "success" : "destructive"}>{m.type}</Badge>
+                        </td>
+                        <td className="px-4 py-3 font-mono font-semibold text-[var(--fg)]">{m.quantity}</td>
+                        <td className="px-4 py-3 text-[var(--muted-fg)]">{m.reason || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </tbody>
-        </table>
+          </Card>
+        </div>
       </div>
     </div>
   );

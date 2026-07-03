@@ -2,38 +2,49 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { useWarehouse } from "@/components/WarehouseProvider";
 import { products as productsApi } from "@/lib/api";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 
-const EMPTY = { name: "", sku: "", price: "", quantity: "", category: "", minStockLevel: "" };
+const inputCls = "rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--fg)] placeholder:text-[var(--muted-fg)] focus:outline-2 focus:outline-[var(--accent)]";
 
 export default function NewProductPage() {
   const { user, loading: authLoading } = useAuth();
+  const { currentWarehouse, loading: whLoading } = useWarehouse();
   const router = useRouter();
-  const [form, setForm] = useState(EMPTY);
-  const [error, setError] = useState("");
+  const [form, setForm] = useState({ name: "", sku: "", price: "", quantity: "", category: "", minStockLevel: "" });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login");
   }, [authLoading, user, router]);
 
-  if (authLoading || !user) return <p className="p-6 text-gray-500">Loading…</p>;
+  useEffect(() => {
+    if (!authLoading && user && !whLoading && !currentWarehouse) router.replace("/warehouses");
+  }, [authLoading, user, whLoading, currentWarehouse, router]);
 
-  function set(field) {
-    return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  function set(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setError("");
     try {
       await productsApi.create({
-        ...form,
+        name: form.name,
+        sku: form.sku,
         price: parseFloat(form.price),
-        quantity: parseInt(form.quantity, 10),
-        minStockLevel: parseInt(form.minStockLevel, 10),
+        quantity: parseInt(form.quantity),
+        category: form.category,
+        minStockLevel: parseInt(form.minStockLevel),
+        warehouseId: currentWarehouse.id,
       });
       router.push("/products");
     } catch (err) {
@@ -43,48 +54,62 @@ export default function NewProductPage() {
     }
   }
 
+  if (authLoading || !user || whLoading) return null;
+
   return (
-    <div className="max-w-lg">
-      <h1 className="text-2xl font-semibold text-slate-800 mb-6">New Product</h1>
-      {error && <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>}
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 flex flex-col gap-4">
-        {[
-          { label: "Name", field: "name", type: "text" },
-          { label: "SKU", field: "sku", type: "text" },
-          { label: "Category", field: "category", type: "text" },
-          { label: "Price", field: "price", type: "number" },
-          { label: "Quantity", field: "quantity", type: "number" },
-          { label: "Min Stock Level", field: "minStockLevel", type: "number" },
-        ].map(({ label, field, type }) => (
-          <div key={field} className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-slate-700">{label}</label>
-            <input
-              type={type}
-              value={form[field]}
-              onChange={set(field)}
-              required
-              step={field === "price" ? "0.01" : undefined}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-        ))}
-        <div className="flex gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60 transition-colors"
-          >
-            {loading ? "Saving…" : "Create product"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/products")}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors"
-          >
-            Cancel
-          </button>
+    <div className="max-w-xl mx-auto">
+      <div className="flex items-center gap-3 mb-6">
+        <Link href="/products">
+          <Button variant="ghost" size="sm"><ArrowLeft size={16} /></Button>
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--fg)]">Add Product</h1>
+          <p className="text-sm text-[var(--muted-fg)] mt-0.5">{currentWarehouse?.name}</p>
         </div>
-      </form>
+      </div>
+
+      <Card className="p-6">
+        {error && (
+          <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2.5 text-sm text-red-700 dark:text-red-400">
+            <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-[var(--fg)]">Product Name</label>
+            <input className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} required placeholder="e.g. Widget Pro" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-[var(--fg)]">SKU</label>
+            <input className={inputCls} value={form.sku} onChange={(e) => set("sku", e.target.value)} required placeholder="e.g. WGT-001" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-[var(--fg)]">Category</label>
+            <input className={inputCls} value={form.category} onChange={(e) => set("category", e.target.value)} placeholder="e.g. Electronics" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-[var(--fg)]">Price ($)</label>
+            <input type="number" min="0" step="0.01" className={inputCls} value={form.price} onChange={(e) => set("price", e.target.value)} required placeholder="0.00" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-[var(--fg)]">Quantity</label>
+            <input type="number" min="0" className={inputCls} value={form.quantity} onChange={(e) => set("quantity", e.target.value)} required placeholder="0" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-[var(--fg)]">Min Stock Level</label>
+            <input type="number" min="0" className={inputCls} value={form.minStockLevel} onChange={(e) => set("minStockLevel", e.target.value)} required placeholder="5" />
+          </div>
+          <div className="sm:col-span-2 flex gap-3 pt-2">
+            <Link href="/products" className="flex-1">
+              <Button type="button" variant="outline" className="w-full justify-center">Cancel</Button>
+            </Link>
+            <Button type="submit" disabled={loading} className="flex-1 justify-center">
+              {loading ? "Creating…" : "Create Product"}
+            </Button>
+          </div>
+        </form>
+      </Card>
     </div>
   );
 }
