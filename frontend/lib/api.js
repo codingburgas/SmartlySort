@@ -5,16 +5,16 @@ async function request(path, options = {}) {
     headers: { "Content-Type": "application/json", ...options.headers },
     ...options,
   });
+  const text = await res.text();
   if (!res.ok) {
     let message = res.statusText;
     try {
-      const body = await res.json();
-      if (body.message) message = body.message;
+      const body = text ? JSON.parse(text) : null;
+      if (body && body.message) message = body.message;
     } catch {}
     throw new Error(message);
   }
-  if (res.status === 204) return null;
-  return res.json();
+  return text ? JSON.parse(text) : null;
 }
 
 export const auth = {
