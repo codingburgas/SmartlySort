@@ -198,7 +198,7 @@ export function AppShell({ children }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  if (pathname === "/login") {
+  if (pathname === "/login" || pathname === "/register") {
     return <>{children}</>;
   }
 

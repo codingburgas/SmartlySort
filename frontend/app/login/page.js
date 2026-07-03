@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { SortAsc, AlertCircle } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/Button";
@@ -80,6 +81,13 @@ export default function LoginPage() {
             </Button>
           </form>
         </div>
+
+        <p className="text-sm text-[var(--muted-fg)] text-center mt-6">
+          Don&apos;t have an account?{" "}
+          <Link href="/register" className="text-[var(--accent)] font-medium hover:underline">
+            Register
+          </Link>
+        </p>
       </div>
     </div>
   );
